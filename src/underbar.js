@@ -109,6 +109,8 @@
 
   // Produce a duplicate-free version of the array.
   _.uniq = function(array) {
+
+
     var results = [];
       _.each(array, function(val){
         if(!_.contains(results, val)) {
@@ -304,15 +306,15 @@
   // already computed the result for the given argument and return that value
   // instead if possible.
   _.memoize = function(func) {
-    var alreadyCalled = alreadyCalled || _.identity;
     var memo = {};
-      return function() {
-        var key = alreadyCalled.apply(this, arguments);
-        if (memo.hasOwnProperty(key)) {
-          return memo[key];
-        }
-        return memo[key] = func.apply(this, arguments);
+    return function(alreadyCalled) {
+      if(alreadyCalled in memo) {
+        return memo[alreadyCalled];
+      } else {
+        memo[alreadyCalled] = func.apply(this, arguments);
+        return memo[alreadyCalled];
       }
+    }
   };
 
   // Delays a function for the given number of milliseconds, and then calls
@@ -352,7 +354,6 @@
     return arr;
   };
 
-
   /**
    * ADVANCED
    * =================
@@ -376,8 +377,12 @@
   // If iterator is a string, sort objects by that property with the name
   // of that string. For example, _.sortBy(people, 'name') should sort
   // an array of people by their name.
-  _.sortBy = function(collection, iterator) {
- 
+
+  _.sortBy = function(collection, iterator, context) {
+    var isString = typeof iterator === 'string';
+    return collection.sort(function(x, y) {
+        return isString ? x[iterator] - y[iterator] : iterator(x) - iterator(y);
+    });
   };
 
   // Zip together two or more arrays with elements of the same index
@@ -386,23 +391,62 @@
   // Example:
   // _.zip(['a','b','c','d'], [1,2,3]) returns [['a',1], ['b',2], ['c',3], ['d',undefined]]
   _.zip = function() {
+    var length = _.max(_.pluck(arguments, 'length').concat(0));
+    var results = new Array(length);
+      for (var i = 0; i < length; i++) {
+        results[i] = _.pluck(arguments, '' + i);
+      }
+      return results;
   };
+
+  _.max = function(obj, iteratee, context) {
+    var result = -Infinity, lastComputed = -Infinity, computed;
+      if (iteratee == null) {
+        _.each(obj, function(value) {
+          if (value > result) {
+            result = value;
+          }
+        })
+      } else {
+        _.each(obj, function(value, index, list) {
+          computed = iteratee(value, index, list);
+          if (computed > lastComputed) {
+            result = value;
+            lastComputed = computed;
+          }
+        });
+      }
+    return result;
+  };
+
 
   // Takes a multidimensional array and converts it to a one-dimensional array.
   // The new array should contain all elements of the multidimensional array.
   //
   // Hint: Use Array.isArray to check if something is an array
+
+
   _.flatten = function(nestedArray, result) {
+    _.each(nestedArray, function(element) {
+      if (Array.isArray(element))
+          nestedArray = _.flatten([].concat.apply([], nestedArray));
+    });
+    return nestedArray;
   };
+
+
 
   // Takes an arbitrary number of arrays and produces an array that contains
   // every item shared between all the passed-in arrays.
-  _.intersection = function() {
+  _.intersection = function(array) {
+
   };
+
 
   // Take the difference between one array and a number of other arrays.
   // Only the elements present in just the first array will remain.
   _.difference = function(array) {
+
   };
 
   // Returns a function, that, when invoked, will only be triggered at most once
